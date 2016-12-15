@@ -34,32 +34,32 @@ class Usuario(Document):
 # Lista de referencias a pedidos (opcional)
 
     dni = 
-    nombre = StringField(required = true)
+    nombre = StringField(required = True)
     apellido_1 = StringField(required = True)
-    apellido_2 = StringField(required = False)
-    fecha_nac = DateField(required = True)
-    fecha_accesos = ComplexDateTimeField(max_length = 10, required = False)
-    tarjetas = ReferenceField(Tarjeta, required = False, reverse_delete_rule = CASCADE)
-    pedidos = ReferenceField(Pedido, required = False, reverse_delete_rule=CASCADE)
+    apellido_2 = StringField()
+    fecha_nac = DateTimeField(required = True)
+    fecha_accesos = ComplexDateTimeField(max_length = 10)
+    tarjetas = ListField(ReferenceField(Tarjeta, reverse_delete_rule = CASCADE))
+    pedidos = ListField(ReferenceField(Pedido, reverse_delete_rule=CASCADE))
 
 class Tarjeta(Document):
-    nombre_propietario = 
-    numero =
-    caducidad_mes = 
-    caducidad_año = 
-    cvv = 
+    nombre_propietario = StringField(required=True)
+    numero = intField(primary_key=True, required = True, min_length=16, max_length=16)
+    caducidad_mes = intField(required = True, min_length=1, max_length=2, min_value=1, max_value=12)
+    caducidad_año = intField(required=True, min_length=4 ,max_length=4, min_value=1800)
+    cvv = intField(required=True, min_length=3, max_length=3)
 
 class Pedido(Document):
-    total = 
-    fecha = 
-    linea_pedido = 
+    total = FloatField(required=True, min_value=0.0)
+    fecha = DateTimeField(required=True)
+    linea_pedido = ListField(Linea_Pedido, required=True)
 
 class Linea_Pedido(Document):
-    cantidad_productos = 
-    precio_producto = 
-    nombre_producto =
-    total = 
-    referencia_producto = 
+    cantidad_productos = intField(required=True, min_value = 1)
+    precio_producto = FloatField(required=True, min_value=0.0)
+    nombre_producto = StringField(required=True)
+    total = FloatField(required=True, min_value=0)
+    referencia_producto = ReferenceField(Producto, required=True)
 
 class Producto(Document):
     codigo = 
