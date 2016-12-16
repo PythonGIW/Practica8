@@ -16,6 +16,7 @@ ni perjudicar los resultados de los demás.
 """
 
 from mongoengine import *
+import datetime
 #import barcode
 
 
@@ -74,8 +75,8 @@ class Linea_Pedido(Document):
             
 class Pedido(Document):
     total = FloatField(required=True, min_value=0.0)
-    fecha = DateTimeField(required=True)
-    linea_pedido = ListField(Linea_Pedido, required=True)
+    fecha = ComplexDateTimeField(required=True)
+    linea_pedido = ListField(ReferenceField(Linea_Pedido), required=True)
 
     def clean(self):
         total = 0
@@ -106,9 +107,17 @@ class Usuario(Document):
 
 
 producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1)
+producto2 = Producto(codigo = 1234567890429, nombre="producto2", categoria=1)
 producto.drop_collection()
 producto.save()
+producto2.save()
 linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=4, referencia_producto=producto)
+linea.drop_collection()
 linea.save()
+linea2 = Linea_Pedido(cantidad_productos=1, precio_producto=1, nombre_producto="producto2", total=1, referencia_producto=producto2)
+linea2.save()
+pedido = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea,linea2])
+pedido.drop_collection()
+pedido.save()
 
 
