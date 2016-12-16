@@ -91,22 +91,62 @@ class Producto(Document):
     nombre =  StringField(required = True)
     categoria = IntField(min_value=0,required = True)
     categorias = ListField(IntField(min_value=0, max_value=1000))
-    
-#    Por ejemplo, para 123456789041 el dígito de control será:
-#    Numeramos de derecha a izquierda: 140987654321
-#    Suma de los números en los lugares impares: 1+0+8+6+4+2 = 21
-#    Multiplicado (por 3): 21 × 3 = 63
-#    Suma de los números en los lugares pares: 4+9+7+5+3+1 = 29
-#    Suma total: 63 + 29 = 92
-#    Decena inmediatamente superior = 100
-#    Dígito de control: 100 - 92 = 8
-#    El código quedará así: 1234567890418.
+
     def crear_ean13(valor, archivo):
         ean = barcode.get('ean13', valor, writer=barcode.writer.ImageWriter())
         # mostramos el codigo de barras en consola
         print ean.to_ascii()
-
-
+    
+        def clean(self):
+        if ((self.codigo%10 != digito_control(self.codigo//10)):#Le pasamos el numero, sin el de control
+            raise ValidationError("El digito de control no coincide")
+            
+            #Por ejemplo, para 123456789041 el dígito de control será:
+            #Numeramos de derecha a izquierda: 140987654321
+            #Suma de los números en los lugares impares: 1+0+8+6+4+2 = 21
+            #Multiplicado (por 3): 21 × 3 = 63
+            #Suma de los números en los lugares pares: 4+9+7+5+3+1 = 29
+            #Suma total: 63 + 29 = 92
+            #Decena inmediatamente superior = 100
+            #Dígito de control: 100 - 92 = 8
+            #El código quedará así: 1234567890418.
+        def digito_control(numero):
+            numero = invertir(numero)
+            pares = suma_pares(numero)*3
+            impares = suma_impares(numero)
+            dSuperior = round(pares+ impares/10.)*10
+            return dSuperior - (pares + impares)
+            
+        #probar con esto en caso de no funcionar int(str(123456789)[::-1]) 
+        def invertir(a):
+            y=(a%10==0)  #Aquí le damos el valor a la variable "y", True, o False, si el N° termina en 0.
+            z=len(str(a))
+            for i in range(z):
+                b=a%10
+                a=a//10
+                x=x*10+b
+            if y:
+                x=str(x)
+                x='0'+x
+            return x
+            
+        def suma_pares(numero):
+            i = 0
+            aux=str(numero)
+            while i <= len(numero):
+                suma+=aux[i]
+                print(i)
+                i += 2
+                
+        def suma_pares(numero):
+            i = 1
+            aux=str(numero)
+            while i <= len(numero):
+                suma+=aux[i]
+                print(i)
+                i += 2
+        
+            
 producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1)
 producto.save()
 linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=5, referencia_producto=producto)
