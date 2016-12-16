@@ -21,8 +21,17 @@ import barcode
 
 #Conectamos a nuestra base de datos
 connect('giw_mongoengine')
- 
+
 #Comenzamos a crear las clases que heredarán de Document ya que son esquemas fijos
+class dni(EmmbeddedDocument):
+    numero: intField(required=True, max_length=8, min_length=8) 
+    letra: StringField(required=True, min_length=1, max_length=1)
+
+    def clean(self):
+        listLetter ['T','R','W','A','G','M','Y','F','P','D','X','B','N','J','Z','S','Q','V','H','L','C','K','E']
+        if(self.letra != listLetter[self.numero%23]):
+            raise ValidationError("DNI no valido")
+
 
 class Usuario(Document):
 # DNI (obligatorio, ´unico)
@@ -35,7 +44,7 @@ class Usuario(Document):
 # Lista de tarjetas de cr´edito (opcional)
 # Lista de referencias a pedidos (opcional)
 
-    dni = 
+    dni = EmmbeddedDocumentField(dni, required=True, unique=True)
     nombre = StringField(required = True)
     apellido_1 = StringField(required = True)
     apellido_2 = StringField()
@@ -74,6 +83,8 @@ class Linea_Pedido(Document):
     def clean(self):
         if ((self.cantidad_productos * self.precio_producto) != self.total):
             raise ValidationError("El total de la linea no coincide")
+        if(self.nombre_producto != self.referencia_producto.nombre):
+            raise ValidationError("Nombre de producto no valido")
 
 class Producto(Document):
     codigo = IntField(min_value=0, unique=True, format EAN-13)
