@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+3# -*- coding: utf-8 -*-
 
 """
 Autores: 
@@ -15,7 +15,9 @@ ni perjudicar los resultados de los demás.
 
 """
 
-from mongoengine import connect
+from mongoengine import connect 
+import barcode
+
 
 #Conectamos a nuestra base de datos
 connect('giw_mongoengine')
@@ -42,6 +44,7 @@ class Usuario(Document):
     tarjetas = ListField(ReferenceField(Tarjeta, reverse_delete_rule = CASCADE))
     pedidos = ListField(ReferenceField(Pedido, reverse_delete_rule=CASCADE))
 
+    
 class Tarjeta(Document):
     nombre_propietario = StringField(required=True)
     numero = intField(primary_key=True, required = True, min_length=16, max_length=16)
@@ -73,8 +76,22 @@ class Linea_Pedido(Document):
             raise ValidationError("El total de la linea no coincide")
 
 class Producto(Document):
-    codigo = 
-    nombre = 
-    categoria = 
-    categorias = 
+    codigo = IntField(min_value=0, unique=True, format EAN-13)
+    nombre =  StringField(required = True)
+    categoria = IntField(min_value=0,required = True)
+    categorias = ListField(IntField(min_value=0, max_value=1000))
+    
+#    Por ejemplo, para 123456789041 el dígito de control será:
+#    Numeramos de derecha a izquierda: 140987654321
+#    Suma de los números en los lugares impares: 1+0+8+6+4+2 = 21
+#    Multiplicado (por 3): 21 × 3 = 63
+#    Suma de los números en los lugares pares: 4+9+7+5+3+1 = 29
+#    Suma total: 63 + 29 = 92
+#    Decena inmediatamente superior = 100
+#    Dígito de control: 100 - 92 = 8
+#    El código quedará así: 1234567890418.
+    def crear_ean13(valor, archivo):
+        ean = barcode.get('ean13', valor, writer=barcode.writer.ImageWriter())
+        # mostramos el codigo de barras en consola
+        print ean.to_ascii()
 
