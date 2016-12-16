@@ -54,12 +54,23 @@ class Pedido(Document):
     fecha = DateTimeField(required=True)
     linea_pedido = ListField(Linea_Pedido, required=True)
 
+    def clean(self):
+        total = 0
+        for l in self.linea_pedido:
+            total += l.total
+        if (self.total != total):
+            raise ValidationError("El total del pedido no coincide")
+
 class Linea_Pedido(Document):
     cantidad_productos = intField(required=True, min_value = 1)
     precio_producto = FloatField(required=True, min_value=0.0)
     nombre_producto = StringField(required=True)
     total = FloatField(required=True, min_value=0)
     referencia_producto = ReferenceField(Producto, required=True)
+
+    def clean(self):
+        if ((self.cantidad_productos * self.precio_producto) != self.total):
+            raise ValidationError("El total de la linea no coincide")
 
 class Producto(Document):
     codigo = 
