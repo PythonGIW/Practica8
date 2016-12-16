@@ -1,4 +1,4 @@
-3# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 """
 Autores: 
@@ -15,17 +15,17 @@ ni perjudicar los resultados de los demás.
 
 """
 
-from mongoengine import connect 
-import barcode
+from mongoengine import connect
+#import barcode
 
 
 #Conectamos a nuestra base de datos
 connect('giw_mongoengine')
 
 #Comenzamos a crear las clases que heredarán de Document ya que son esquemas fijos
-class dni(EmmbeddedDocument):
-    numero: intField(required=True, max_length=8, min_length=8) 
-    letra: StringField(required=True, min_length=1, max_length=1)
+class dni(EmbeddedDocument):
+    numero= intField(required=True, max_length=8, min_length=8) 
+    letra= StringField(required=True, min_length=1, max_length=1)
 
     def clean(self):
         listLetter ['T','R','W','A','G','M','Y','F','P','D','X','B','N','J','Z','S','Q','V','H','L','C','K','E']
@@ -58,7 +58,7 @@ class Tarjeta(Document):
     nombre_propietario = StringField(required=True)
     numero = intField(primary_key=True, required = True, min_length=16, max_length=16)
     caducidad_mes = intField(required = True, min_length=1, max_length=2, min_value=1, max_value=12)
-    caducidad_año = intField(required=True, min_length=4 ,max_length=4, min_value=1800)
+    caducidad_ano = intField(required=True, min_length=4 ,max_length=4, min_value=1800)
     cvv = intField(required=True, min_length=3, max_length=3)
 
 class Pedido(Document):
@@ -87,7 +87,7 @@ class Linea_Pedido(Document):
             raise ValidationError("Nombre de producto no valido")
 
 class Producto(Document):
-    codigo = IntField(min_value=0, unique=True, format EAN-13)
+    codigo = IntField(min_value=0, unique=True)
     nombre =  StringField(required = True)
     categoria = IntField(min_value=0,required = True)
     categorias = ListField(IntField(min_value=0, max_value=1000))
@@ -105,4 +105,11 @@ class Producto(Document):
         ean = barcode.get('ean13', valor, writer=barcode.writer.ImageWriter())
         # mostramos el codigo de barras en consola
         print ean.to_ascii()
+
+
+producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1)
+producto.save()
+linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=5, referencia_producto=producto)
+linea.save()
+
 
