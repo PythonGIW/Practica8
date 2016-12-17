@@ -29,8 +29,10 @@ class Dni(EmbeddedDocument):
     letra= StringField(required=True, min_length=1, max_length=1)
 
     def clean(self):
+        
         listLetter = ['T','R','W','A','G','M','Y','F','P','D','X','B','N','J','Z','S','Q','V','H','L','C','K','E']
-        if(self.letra != listLetter[self.numero%23]):
+    
+        if(self.letra != listLetter[int(self.numero)%23]):
             raise ValidationError("DNI no valido")
 
 class Tarjeta(Document):
@@ -143,23 +145,53 @@ class Usuario(Document):
 
 
 def insert():
-    producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1, categorias = [2,3])
-    producto2 = Producto(codigo = 7702004003508, nombre="producto2", categoria=1)
-    linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=4, referencia_producto=producto)
-    linea2 = Linea_Pedido(cantidad_productos=1, precio_producto=1, nombre_producto="producto2", total=1, referencia_producto=producto2)
-    pedido = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea,linea2])
 
-    producto.drop_collection()
-    producto2.drop_collection()
-    linea.drop_collection()
-    linea2.drop_collection()
-    pedido.drop_collection()
 
-    producto.save()
-    producto2.save()
-    linea.save()
-    linea2.save()
-    pedido.save()
+    producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1, categorias = [2,3]).save()
+    producto2 = Producto(codigo = 7702004003508, nombre="producto2", categoria=1).save()
+   
+
+    linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=4, referencia_producto=producto).save()
+    linea2 = Linea_Pedido(cantidad_productos=1, precio_producto=1, nombre_producto="producto2", total=1, referencia_producto=producto2).save()
+    linea3 = Linea_Pedido(cantidad_productos=1, precio_producto=2, nombre_producto="producto1", total=2, referencia_producto=producto).save()
+    linea4 = Linea_Pedido(cantidad_productos=3, precio_producto=1, nombre_producto="producto2", total=3, referencia_producto=producto2).save()
+
+    
+    pedido = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea,linea2]).save()
+    pedido2 = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea3,linea4]).save()
+    pedido3 = Pedido(total=7, fecha=datetime.datetime.now(),linea_pedido=[linea4,linea]).save()
+    pedido4 = Pedido(total=3, fecha=datetime.datetime.now(),linea_pedido=[linea3,linea2]).save()
+   
+    
+    tarjeta = Tarjeta(nombre_propietario = 'Luis', numero = 0000000000000000, caducidad_mes = 12, caducidad_ano = 2016, cvv = 100).save()
+    tarjeta2 = Tarjeta(nombre_propietario = 'Zinedine', numero = 0000000000000001, caducidad_mes = 11, caducidad_ano = 2016, cvv = 100).save()
+    tarjeta3 = Tarjeta(nombre_propietario = 'Zinedine', numero = 0000000000000003, caducidad_mes = 10, caducidad_ano = 2016, cvv = 100).save()
+    
+
+    dni_ = Dni(numero = 97295845, letra = 'A')
+    dni_2 = Dni(numero = 79870277, letra = 'V')
+    
+    
+    usuario = Usuario(dni = dni_, nombre='Luis', apellido_1='Figo', apellido_2='Figuinio', fecha_nac = datetime.datetime(1960, 1, 5, 0, 0 ,0), fecha_accesos = datetime.datetime.now(), tarjetas = [tarjeta], pedidos = [pedido, pedido2]).save()
+    usuario2 = Usuario(dni = dni_2, nombre='Zinedine', apellido_1='Zidane', apellido_2='Zizou', fecha_nac = datetime.datetime(1981, 1, 5, 0, 0 ,0), fecha_accesos = datetime.datetime.now(), tarjetas = [tarjeta2, tarjeta3], pedidos = [pedido3, pedido4]).save()
+    
+    dni_.save()
+    dni_2.save()
+
+    # producto.drop_collection()
+    # producto2.drop_collection()
+    
+    # tarjeta.drop_collection()
+
+    # linea.drop_collection()
+    # linea2.drop_collection()
+    # linea3.drop_collection()
+    # linea4.drop_collection()
+
+    # pedido.drop_collection()
+    
+    # usuario.drop_collection()
+   
 
 if __name__ == "__main__":
     insert()
