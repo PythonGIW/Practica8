@@ -17,7 +17,7 @@ ni perjudicar los resultados de los demás.
 
 from mongoengine import *
 import datetime
-#import barcode
+import barcode
 
 
 #Conectamos a nuestra base de datos
@@ -46,14 +46,33 @@ class Producto(Document):
     categoria = IntField(min_value=0,required = True)
     categorias = ListField(IntField(min_value=0, max_value=1000))
 
+    def clean(self):
+        for categorias in self.categorias:
+            if(categorias is not None):
+                self.categorias.insert(0,self.categoria)
+                break
+        cod = self.codigo//10
+        if(self.codigo%10 != self.digito_control(cod) ):   #Le pasamos el numero sin el de control
+            raise ValidationError("El digito de control no coincide")
+
     def crear_ean13(valor, archivo):
         ean = barcode.get('ean13', valor, writer=barcode.writer.ImageWriter())
         # mostramos el codigo de barras en consola
-        print ean.to_ascii()
+        return ean.to_ascii()
+
+    def digito_control(self, digito):
+        numero = self.invertir(digito)
+
+        pares = self.suma_pares(digito)
+        impares = self.suma_impares(digito)*3
+        suma = pares+ impares
+        dSuperior = suma
+        while dSuperior % 10 != 0:
+            dSuperior+=1
+
+        dc = dSuperior - suma
+        return dc
     
-    def clean(self):
-    if ((self.codigo%10 != digito_control(self.codigo//10)):#Le pasamos el numero, sin el de control
-        raise ValidationError("El digito de control no coincide")
         
         #Por ejemplo, para 123456789041 el dígito de control será:
         #Numeramos de derecha a izquierda: 140987654321
@@ -64,41 +83,27 @@ class Producto(Document):
         #Decena inmediatamente superior = 100
         #Dígito de control: 100 - 92 = 8
         #El código quedará así: 1234567890418.
-    def digito_control(numero):
-        numero = invertir(numero)
-        pares = suma_pares(numero)*3
-        impares = suma_impares(numero)
-        dSuperior = round(pares+ impares/10.)*10
-        return dSuperior - (pares + impares)
+    
+    def invertir(self, a):
+        return int(str(a)[::-1])
         
-    #probar con esto en caso de no funcionar int(str(123456789)[::-1]) 
-    def invertir(a):
-        y=(a%10==0)  #Aquí le damos el valor a la variable "y", True, o False, si el N° termina en 0.
-        z=len(str(a))
-        for i in range(z):
-            b=a%10
-            a=a//10
-            x=x*10+b
-        if y:
-            x=str(x)
-            x='0'+x
-        return x
-        
-    def suma_pares(numero):
+    def suma_pares(self, numero):
         i = 0
+        suma = 0
         aux=str(numero)
-        while i <= len(numero):
-            suma+=aux[i]
-            print(i)
+        while i <= len(str(numero)) - 1:
+            suma+=int(aux[i])
             i += 2
+        return suma
             
-    def suma_pares(numero):
+    def suma_impares(self, numero):
         i = 1
+        suma = 0
         aux=str(numero)
-        while i <= len(numero):
-            suma+=aux[i]
-            print(i)
+        while i <= len(str(numero)) - 1:
+            suma+=int(aux[i])
             i += 2
+        return suma
     
 
 class Linea_Pedido(Document):
@@ -127,16 +132,6 @@ class Pedido(Document):
             raise ValidationError("El total del pedido no coincide")
 
 class Usuario(Document):
-# DNI (obligatorio, ´unico)
-# Nombre (obligatorio)
-# Primer apellidos (obligatorio)
-# Segundo apellido (opcional)
-# Fecha de nacimiento (obligatorio, formato ’AAAA-MM-DD’)
-# Fecha de los ´ultimos 10 accesos al sistema (opcional, las fechas tienen el
-# formato ’AAAA,MM,DD,HH,MM,SS,NNNNNN’)
-# Lista de tarjetas de cr´edito (opcional)
-# Lista de referencias a pedidos (opcional)
-
     dni = EmbeddedDocumentField(Dni, required=True, unique=True)
     nombre = StringField(required = True)
     apellido_1 = StringField(required = True)
@@ -146,18 +141,26 @@ class Usuario(Document):
     tarjetas = ListField(ReferenceField(Tarjeta, reverse_delete_rule = CASCADE))
     pedidos = ListField(ReferenceField(Pedido, reverse_delete_rule=CASCADE))
 
-producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1)
-producto2 = Producto(codigo = 1234567890429, nombre="producto2", categoria=1)
-producto.drop_collection()
-producto.save()
-producto2.save()
-linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=4, referencia_producto=producto)
-linea.drop_collection()
-linea.save()
-linea2 = Linea_Pedido(cantidad_productos=1, precio_producto=1, nombre_producto="producto2", total=1, referencia_producto=producto2)
-linea2.save()
-pedido = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea,linea2])
-pedido.drop_collection()
-pedido.save()
 
+def insert():
+    producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1, categorias = [2,3])
+    producto2 = Producto(codigo = 7702004003508, nombre="producto2", categoria=1)
+    linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=4, referencia_producto=producto)
+    linea2 = Linea_Pedido(cantidad_productos=1, precio_producto=1, nombre_producto="producto2", total=1, referencia_producto=producto2)
+    pedido = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea,linea2])
+
+    producto.drop_collection()
+    producto2.drop_collection()
+    linea.drop_collection()
+    linea2.drop_collection()
+    pedido.drop_collection()
+
+    producto.save()
+    producto2.save()
+    linea.save()
+    linea2.save()
+    pedido.save()
+
+if __name__ == "__main__":
+    insert()
 
