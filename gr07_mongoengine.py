@@ -43,16 +43,15 @@ class Tarjeta(Document):
     cvv = IntField(required=True, min_length=3, max_length=3)
 
 class Producto(Document):
-    codigo = IntField(min_value=0, unique=True)
+    codigo = IntField(min_value=0, unique=True, barcode="EAN13")
     nombre =  StringField(required = True)
     categoria = IntField(min_value=0,required = True)
     categorias = ListField(IntField(min_value=0, max_value=1000))
 
     def clean(self):
-        for categorias in self.categorias:
-            if(categorias is not None):
-                self.categorias.insert(0,self.categoria)
-                break
+        if self.categorias:
+            if(self.categoria != self.categorias[0]):
+                raise ValidationError("La categoria principal no coincide con la primera")
         cod = self.codigo//10
         if(self.codigo%10 != self.digito_control(cod) ):   #Le pasamos el numero sin el de control
             raise ValidationError("El digito de control no coincide")
@@ -144,26 +143,34 @@ class Usuario(Document):
     pedidos = ListField(ReferenceField(Pedido, reverse_delete_rule=CASCADE))
 
 
-def insert():
+def insertar():
 
 
-    producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1, categorias = [2,3]).save()
+    producto = Producto(codigo = 1234567890418, nombre="producto1", categoria=1, categorias = [1,2,3])
+    producto.drop_collection()
+    producto.save()
     producto2 = Producto(codigo = 7702004003508, nombre="producto2", categoria=1).save()
    
 
-    linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=4, referencia_producto=producto).save()
+    linea = Linea_Pedido(cantidad_productos=2, precio_producto=2, nombre_producto="producto1", total=4, referencia_producto=producto)
+    linea.drop_collection()
+    linea.save()
     linea2 = Linea_Pedido(cantidad_productos=1, precio_producto=1, nombre_producto="producto2", total=1, referencia_producto=producto2).save()
     linea3 = Linea_Pedido(cantidad_productos=1, precio_producto=2, nombre_producto="producto1", total=2, referencia_producto=producto).save()
     linea4 = Linea_Pedido(cantidad_productos=3, precio_producto=1, nombre_producto="producto2", total=3, referencia_producto=producto2).save()
 
     
-    pedido = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea,linea2]).save()
+    pedido = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea,linea2])
+    pedido.drop_collection()
+    pedido.save()
     pedido2 = Pedido(total=5, fecha=datetime.datetime.now(),linea_pedido=[linea3,linea4]).save()
     pedido3 = Pedido(total=7, fecha=datetime.datetime.now(),linea_pedido=[linea4,linea]).save()
     pedido4 = Pedido(total=3, fecha=datetime.datetime.now(),linea_pedido=[linea3,linea2]).save()
    
     
-    tarjeta = Tarjeta(nombre_propietario = 'Luis', numero = 0000000000000000, caducidad_mes = 12, caducidad_ano = 2016, cvv = 100).save()
+    tarjeta = Tarjeta(nombre_propietario = 'Luis', numero = 0000000000000000, caducidad_mes = 12, caducidad_ano = 2016, cvv = 100)
+    tarjeta.drop_collection()
+    tarjeta.save()
     tarjeta2 = Tarjeta(nombre_propietario = 'Zinedine', numero = 0000000000000001, caducidad_mes = 11, caducidad_ano = 2016, cvv = 100).save()
     tarjeta3 = Tarjeta(nombre_propietario = 'Zinedine', numero = 0000000000000003, caducidad_mes = 10, caducidad_ano = 2016, cvv = 100).save()
     
@@ -172,7 +179,10 @@ def insert():
     dni_2 = Dni(numero = 79870277, letra = 'V')
     
     
-    usuario = Usuario(dni = dni_, nombre='Luis', apellido_1='Figo', apellido_2='Figuinio', fecha_nac = datetime.datetime(1960, 1, 5, 0, 0 ,0), fecha_accesos = datetime.datetime.now(), tarjetas = [tarjeta], pedidos = [pedido, pedido2]).save()
+    usuario = Usuario(dni = dni_, nombre='Luis', apellido_1='Figo', apellido_2='Figuinio', fecha_nac = datetime.datetime(1960, 1, 5, 0, 0 ,0), fecha_accesos = datetime.datetime.now(), tarjetas = [tarjeta], pedidos = [pedido, pedido2])
+    usuario.drop_collection()
+    usuario.save()
+    
     usuario2 = Usuario(dni = dni_2, nombre='Zinedine', apellido_1='Zidane', apellido_2='Zizou', fecha_nac = datetime.datetime(1981, 1, 5, 0, 0 ,0), fecha_accesos = datetime.datetime.now(), tarjetas = [tarjeta2, tarjeta3], pedidos = [pedido3, pedido4]).save()
     
     dni_.save()
@@ -194,5 +204,5 @@ def insert():
    
 
 if __name__ == "__main__":
-    insert()
+    insertar()
 
